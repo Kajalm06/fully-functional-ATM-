@@ -1,0 +1,128 @@
+class Account:
+    def __init__(self, account_number, pin, balance=0):
+        self.account_number = account_number
+        self.pin = pin
+        self.balance = balance
+        self.transaction_log = []
+
+    def check_balance(self):
+        return self.balance
+
+    def deposit(self, amount):
+        self.balance += amount
+        self.transaction_log.append(f"Deposited: {amount}")
+        return self.balance
+
+    def withdraw(self, amount):
+        if amount > self.balance:
+            raise ValueError("Insufficient funds")
+        self.balance -= amount
+        self.transaction_log.append(f"Withdrew: {amount}")
+        return self.balance
+
+    def get_transaction_log(self):
+        return self.transaction_log
+
+
+class Bank:
+    def __init__(self):
+        self.accounts = {}
+
+    def add_account(self, account_number, pin, balance=0):
+        if account_number in self.accounts:
+            raise ValueError("Account already exists")
+        self.accounts[account_number] = Account(account_number, pin, balance)
+
+    def get_account(self, account_number, pin):
+        account = self.accounts.get(account_number)
+        if account is None or account.pin != pin:
+            raise ValueError("Invalid account number or PIN")
+        return account
+
+
+class ATM:
+    def __init__(self, bank):
+        self.bank = bank
+        self.current_account = None
+
+    def authenticate(self, account_number, pin):
+        self.current_account = self.bank.get_account(account_number, pin)
+
+    def check_balance(self):
+        if self.current_account is None:
+            raise ValueError("No account authenticated")
+        return self.current_account.check_balance()
+
+    def deposit(self, amount):
+        if self.current_account is None:
+            raise ValueError("No account authenticated")
+        return self.current_account.deposit(amount)
+
+    def withdraw(self, amount):
+        if self.current_account is None:
+            raise ValueError("No account authenticated")
+        return self.current_account.withdraw(amount)
+
+    def get_transaction_log(self):
+        if self.current_account is None:
+            raise ValueError("No account authenticated")
+        return self.current_account.get_transaction_log()
+
+    def logout(self):
+        self.current_account = None
+
+
+def main():
+    bank = Bank()
+    atm = ATM(bank)
+
+    # Add some accounts for testing
+    bank.add_account("123456", "1234", 1000)
+    bank.add_account("654321", "4321", 500)
+
+    while True:
+        print("Welcome to the ATM")
+        account_number = input("Enter account number: ")
+        pin = input("Enter PIN: ")
+
+        try:
+            atm.authenticate(account_number, pin)
+            print("Authentication successful")
+
+            while True:
+                print("\n1. Check Balance")
+                print("2. Deposit")
+                print("3. Withdraw")
+                print("4. Transaction Log")
+                print("5. Logout")
+
+                choice = input("Choose an option: ")
+
+                if choice == "1":
+                    print(f"Balance: {atm.check_balance()}")
+                elif choice == "2":
+                    amount = float(input("Enter amount to deposit: "))
+                    print(f"New Balance: {atm.deposit(amount)}")
+                elif choice == "3":
+                    amount = float(input("Enter amount to withdraw: "))
+                    try:
+                        print(f"New Balance: {atm.withdraw(amount)}")
+                    except ValueError as e:
+                        print(e)
+                elif choice == "4":
+                    print("Transaction Log:")
+                    for log in atm.get_transaction_log():
+                        print(log)
+                elif choice == "5":
+                    atm.logout()
+                    print("Logged out")
+                    break
+                else:
+                    print("Invalid option")
+
+        except ValueError as e:
+            print(e)
+
+
+if __name__ == "__main__":
+    main()
